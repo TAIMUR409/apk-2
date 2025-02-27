@@ -1,0 +1,35 @@
+name: Build Kivy APK
+
+on:
+  push:
+    branches:
+      - main  # Jab bhi main branch pr push hoga, ye run karega
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y python3 python3-pip openjdk-17-jdk unzip zip
+          pip install --upgrade Cython virtualenv buildozer
+
+      - name: Setup Buildozer
+        run: |
+          buildozer init
+          sed -i 's/^android.ndk_api = .*/android.ndk_api = 23/' buildozer.spec
+          sed -i 's/^arch = .*/arch = armeabi-v7a/' buildozer.spec
+
+      - name: Build APK
+        run: buildozer -v android debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: CalculatorVault-APK
+          path: bin/*.apk
